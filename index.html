@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Little Garden 🌱</title>
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --cream:#fffaf5; --ink:#5b4a44; --muted:#9a857c; --line:#ecd9cf;
+    --green:#8fbf9f; --green-d:#6fa383; --pink:#e8a0a8; --purple:#b39ddb; --gold:#f2c14e;
+    --shadow:0 10px 30px rgba(150,110,100,.10);
+  }
+  html,body{margin:0;min-height:100%}
+  body{
+    background:linear-gradient(160deg,#fdf1ea 0%,#f6ebf3 55%,#eaf3f7 100%);
+    color:var(--ink);
+    font-family:'Nunito','Quicksand','Segoe UI',system-ui,-apple-system,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #app{max-width:1180px;margin:0 auto;padding:14px 14px 28px}
+
+  header{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    background:rgba(255,255,255,.78);border:1px solid var(--line);
+    border-radius:22px;padding:11px 16px;box-shadow:var(--shadow);
+    backdrop-filter:blur(10px);
+  }
+  .logo{font-size:21px;font-weight:900;letter-spacing:.3px;display:flex;align-items:center;gap:8px}
+  .logo span{font-size:24px}
+  .stats{display:flex;gap:7px;margin-left:auto;flex-wrap:wrap}
+  .stat{
+    background:#fff;border:1px solid var(--line);border-radius:999px;
+    padding:6px 11px;font-size:13px;font-weight:800;white-space:nowrap;
+    box-shadow:0 2px 6px rgba(150,110,100,.05);
+  }
+  .iconbtn{
+    border:1px solid var(--line);background:#fff;border-radius:12px;
+    width:36px;height:36px;font-size:17px;cursor:pointer;color:var(--ink);
+    transition:transform .15s,background .15s;
+  }
+  .iconbtn:hover{transform:translateY(-2px);background:#fff6f0}
+
+  #xpWrap{max-width:1180px;margin:10px auto 0;padding:0 14px;display:flex;align-items:center;gap:10px;font-size:11.5px;font-weight:900;color:var(--muted)}
+  #xpWrap b{color:#7a5f8a}
+  .xpBar{flex:1;height:10px;background:#f2e8e2;border-radius:99px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.05)}
+  .xpBar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#a8d5a2,#8fbf9f,#b39ddb);transition:width .4s}
+
+  main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(320px,.92fr);gap:16px;margin-top:10px;align-items:start}
+  @media(max-width:880px){main{grid-template-columns:1fr}}
+
+  #gardenWrap{position:relative;background:#fff;border:1px solid var(--line);border-radius:24px;padding:9px;box-shadow:var(--shadow)}
+  canvas{display:block;width:100%;aspect-ratio:1/1;border-radius:18px;touch-action:manipulation;cursor:pointer}
+  #toast{
+    position:absolute;left:50%;top:20px;transform:translate(-50%,-14px);
+    background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:999px;
+    padding:9px 16px;font-size:13px;font-weight:800;box-shadow:var(--shadow);
+    opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;max-width:88%;text-align:center;
+  }
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #seedBadge{
+    position:absolute;left:20px;top:18px;background:rgba(255,255,255,.88);
+    border:1px solid var(--line);border-radius:999px;padding:6px 11px;
+    font-size:12px;font-weight:800;box-shadow:0 3px 10px rgba(120,90,80,.08);pointer-events:none;
+  }
+  .gardenFooter{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 4px 3px;flex-wrap:wrap}
+  #nightBtn{
+    flex:0 0 auto;border:0;border-radius:999px;
+    background:linear-gradient(135deg,#b39ddb,#8c7bc4);color:#fff;
+    padding:10px 16px;font-size:13px;font-weight:900;cursor:pointer;
+    box-shadow:0 6px 14px rgba(120,100,180,.28);transition:transform .15s,filter .15s;
+  }
+  #nightBtn:hover{transform:translateY(-2px);filter:brightness(1.06)}
+  .hint{color:var(--muted);font-size:11.5px;font-weight:700;line-height:1.5;flex:1;min-width:180px}
+
+  #panel{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+  .tabs{display:flex;gap:4px;padding:10px 10px 0;border-bottom:1px solid var(--line)}
+  .tab{
+    flex:1;border:0;background:transparent;padding:10px 4px;border-radius:12px 12px 0 0;
+    font-size:13px;font-weight:900;color:var(--muted);cursor:pointer;transition:.15s;
+  }
+  .tab:hover{color:var(--ink);background:#fff6f0}
+  .tab.active{color:#7a5f8a;background:#fff;border-bottom:2px solid var(--purple)}
+  #tabContent{padding:12px;max-height:640px;overflow:auto}
+  #tabContent::-webkit-scrollbar{width:8px}
+  #tabContent::-webkit-scrollbar-thumb{background:#e8d5ca;border-radius:8px}
+
+  .sectionTitle{font-size:12px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:6px 2px 10px}
+  .card{
+    display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);
+    border-radius:16px;padding:10px;margin-bottom:9px;transition:.15s;
+  }
+  .card.sel{border-color:var(--green);box-shadow:0 0 0 2px rgba(143,191,159,.25)}
+  .cardIcon{
+    width:44px;height:44px;flex:0 0 44px;border-radius:13px;display:grid;place-items:center;
+    font-size:24px;background:linear-gradient(140deg,#fff3e6,#f6e6f5);
+  }
+  .cardBody{flex:1;min-width:0}
+  .cardTitle{font-size:14px;font-weight:900;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .cardSub{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:3px;line-height:1.4}
+  .pill{background:#f3e9f7;color:#7a5f8a;border-radius:999px;padding:2px 7px;font-size:10.5px;font-weight:900}
+  .pill.g{background:#e8f5ec;color:#5f8f70}
+  .cardActions{display:flex;flex-direction:column;gap:5px;flex:0 0 auto}
+  button.act{
+    border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px;
+    font-size:11.5px;font-weight:900;cursor:pointer;color:var(--ink);white-space:nowrap;transition:.15s;
+  }
+  button.act:hover{background:#fff6f0;transform:translateY(-1px)}
+  button.act.primary{background:var(--green);border-color:var(--green);color:#fff}
+  button.act.primary:hover{background:var(--green-d)}
+  button.act:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .owned{color:var(--green-d);font-weight:900;font-size:12px}
+
+  .albumGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .tile{
+    background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 4px;
+    text-align:center;min-height:82px;
+  }
+  .tile .ic{font-size:25px;line-height:1.2}
+  .tile .nm{font-size:10.5px;font-weight:900;margin-top:4px;line-height:1.25}
+  .tile.locked{opacity:.5;filter:grayscale(1)}
+  .bar{height:8px;background:#f2e8e2;border-radius:99px;overflow:hidden;margin:4px 2px 12px}
+  .bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--pink),var(--purple))}
+
+  .help p{font-size:13px;line-height:1.7;margin:0 0 10px}
+  .help b{color:#7a5f8a}
+  .step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
+  .step .n{width:24px;height:24px;flex:0 0 24px;border-radius:50%;background:#f3e9f7;color:#7a5f8a;display:grid;place-items:center;font-weight:900;font-size:12px}
+  .step div{font-size:12.5px;line-height:1.5}
+  .danger{width:100%;margin-top:12px;background:#fff0f0;border-color:#f3caca;color:#b56464}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo"><span>🌸</span> Little Garden</div>
+    <div class="stats">
+      <div class="stat" title="Coins">⭐ <span id="sCoins">0</span></div>
+      <div class="stat" title="Day">📅 <span id="sDay">1</span></div>
+      <div class="stat" title="Charm">💚 <span id="sCharm">0</span></div>
+      <div class="stat" title="Streak">🔥 <span id="sStreak">0</span></div>
+    </div>
+    <button class="iconbtn" id="muteBtn" title="Toggle sound">🔊</button>
+  </header>
+  <div id="xpWrap">
+    <span>🌿 Lv <b id="xpLevel">1</b></span>
+    <div class="xpBar"><i id="xpFill" style="width:0%"></i></div>
+    <span id="xpText">0 / 60 XP</span>
+  </div>
+
+  <main>
+    <section id="gardenWrap">
+      <canvas id="garden"></canvas>
+      <div id="seedBadge">🌼 Daisy selected</div>
+      <div id="toast"></div>
+      <div class="gardenFooter">
+        <div class="hint">Tap an empty plot to plant · Tap a growing plant to water · Tap a bloom to harvest</div>
+        <button id="nightBtn">🌙 Good Night</button>
+      </div>
+    </section>
+
+    <aside id="panel">
+      <nav class="tabs">
+        <button class="tab active" data-tab="seeds">Seeds</button>
+        <button class="tab" data-tab="orders">Orders<span id="orderBadge"></span></button>
+        <button class="tab" data-tab="shop">Shop</button>
+        <button class="tab" data-tab="album">Album</button>
+        <button class="tab" data-tab="help">Help</button>
+      </nav>
+      <div id="tabContent"></div>
+    </aside>
+  </main>
+</div>
+
+<script>
+/* ---------------- Data ---------------- */
+const PLANTS = {
+  daisy:      {name:'Daisy',       emoji:'🌼', cost:0,   grow:8000,   sell:5,   petals:8,  color:'#fffdf7', center:'#f6c453', desc:'A cheerful little bloom.'},
+  tulip:      {name:'Tulip',       emoji:'🌷', cost:6,   grow:20000,  sell:14,  petals:5,  color:'#f4a7b9', center:'#e47894', desc:'A cup of spring sunshine.'},
+  lavender:   {name:'Lavender',    emoji:'🪻', cost:14,  grow:45000,  sell:34,  petals:6,  color:'#b79ce0', center:'#8e72c4', desc:'Smells like calm evenings.'},
+  sunflower:  {name:'Sunflower',   emoji:'🌻', cost:30,  grow:90000,  sell:75,  petals:12, color:'#ffd166', center:'#8a5a2b', desc:'Always faces the light.'},
+  moonflower: {name:'Moonflower',  emoji:'🌙', cost:60,  grow:120000, sell:160, petals:7,  color:'#cfe8ff', center:'#7fa6d9', desc:'Blooms under the stars.'},
+  starbloom:  {name:'Star Bloom',  emoji:'✨', cost:120, grow:180000, sell:350, petals:5,  color:'#ffb3d9', center:'#e75480', desc:'A rare, shimmering wonder.'}
+};
+const PLANT_KEYS = Object.keys(PLANTS);
+const UNLOCK_LEVEL = {daisy:1, tulip:1, lavender:2, sunflower:4, moonflower:6, starbloom:9};
+
+const VILLAGERS = [
+  {name:'Maya',   emoji:'👩‍🌾'},
+  {name:'Oliver', emoji:'🧑‍🌾'},
+  {name:'Luna',   emoji:'👩‍🎤'},
+  {name:'Bram',   emoji:'👨‍🌾'},
+  {name:'Iris',   emoji:'👧'}
+];
+const TASK_POOL = [
+  {id:'harvest5',  label:'Harvest any 5 flowers',   target:5,   reward:35,  xp:15, track:'harvest'},
+  {id:'water3',    label:'Water plants 3 times',    target:3,   reward:25,  xp:10, track:'water'},
+  {id:'plant4',    label:'Plant 4 seeds',           target:4,   reward:30,  xp:12, track:'plant'},
+  {id:'tulip2',    label:'Harvest 2 Tulips',        target:2,   reward:45,  xp:18, track:'harvest', plant:'tulip'},
+  {id:'order1',    label:'Complete a villager order',target:1,  reward:50,  xp:20, track:'order'},
+  {id:'earn150',   label:'Earn 150 coins',          target:150, reward:40,  xp:15, track:'coins'}
+];
+
+const CRITTERS = {
+  ladybug:   {name:'Ladybug',        emoji:'🐞', desc:'A tiny red visitor.'},
+  bee:       {name:'Bumblebee',      emoji:'🐝', desc:'Busy and buzzy.'},
+  butterfly: {name:'Blue Butterfly', emoji:'🦋', desc:'Dances on the breeze.'},
+  snail:     {name:'Garden Snail',   emoji:'🐌', desc:'Slow and steady.'},
+  firefly:   {name:'Firefly',        emoji:'🌟', desc:'A spark in the night.'},
+  cat:       {name:'Stray Cat',      emoji:'🐱', desc:'Came for a nap.'}
+};
+const CRITTER_KEYS = Object.keys(CRITTERS);
+
+const DECOR = {
+  fence:     {name:'Picket Fence', emoji:'🪵', cost:40,  charm:1, desc:'+5% coins from harvests.'},
+  lantern:   {name:'Lantern',      emoji:'🏮', cost:90,  charm:2, desc:'+10% growth speed.'},
+  birdbath:  {name:'Birdbath',     emoji:'🕊️', cost:160, charm:3, desc:'+10% rare visitor chance.'},
+  bench:     {name:'Cozy Bench',   emoji:'🪑', cost:240, charm:4, desc:'+4 charm for your garden.'},
+  windchime: {name:'Wind Chime',   emoji:'🎐', cost:320, charm:4, desc:'+5% growth, +5% coins.'},
+  pond:      {name:'Tiny Pond',    emoji:'💧', cost:450, charm:6, desc:'+8% rare finds, +6 charm.'}
+};
+const DECOR_KEYS = Object.keys(DECOR);
+
+const DAY_MS = 240000;
+const SAVE_KEY = 'littleGarden.v1';
+const TAU = Math.PI * 2;
+const MAX_PLOTS = 25;
+
+/* ---------------- State ---------------- */
+function newGame(){
+  return {
+    v:1, coins:20, day:1, dayT:0, streak:0, xp:0, level:1,
+    plots:Array.from({length:9},()=>({plant:null,progress:0,waters:0})),
+    unlocked:9,
+    seeds:{daisy:0,tulip:1,lavender:0,sunflower:0,moonflower:0,starbloom:0},
+    decor:{}, album:{}, orders:[], tasks:[],
+    stats:{harvested:0,watered:0,planted:0,ordersDone:0,coinsEarned:0},
+    muted:false, lastSeen:Date.now()
+  };
+}
+let state = loadGame();
+const ui = {tab:'seeds', selected:'daisy'};
+let offlineMessage = '';
+
+function loadGame(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return newGame();
+    const s = JSON.parse(raw);
+    if(!s || s.v!==1 || !Array.isArray(s.plots)) return newGame();
+    const base = newGame();
+    s.seeds = Object.assign(base.seeds, s.seeds||{});
+    s.decor = s.decor||{}; s.album = s.album||{};
+    s.stats = Object.assign(base.stats, s.stats||{});
+    s.xp = Math.max(0, s.xp||0);
+    s.level = Math.max(1, s.level||1);
+    s.orders = Array.isArray(s.orders) ? s.orders : [];
+    s.tasks = Array.isArray(s.tasks) ? s.tasks : [];
+    s.dayT = Math.max(0,Math.min(1,s.dayT||0));
+    s.unlocked = Math.max(9,Math.min(MAX_PLOTS,s.unlocked||9));
+    while(s.plots.length < s.unlocked) s.plots.push({plant:null,progress:0,waters:0});
+    s.plots.length = s.unlocked;
+    return s;
+  }catch(e){ return newGame(); }
+}
+function save(){
+  try{ state.lastSeen = Date.now(); localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){}
+}
+function applyOffline(){
+  const elapsed = Math.max(0, Math.min(Date.now() - (state.lastSeen||Date.now()), 12*3600*1000));
+  if(elapsed < 3000) return;
+  const boost = elapsed * speedMult();
+  let grown = 0;
+  for(const p of state.plots){
+    if(p.plant){
+      const g = PLANTS[p.plant].grow;
+      const before = p.progress;
+      p.progress = Math.min(g, p.progress + boost);
+      if(p.progress > before) grown++;
+    }
+  }
+  state.dayT = (state.dayT + elapsed/DAY_MS) % 1;
+  if(elapsed > 60000){
+    offlineMessage = grown ? `🌿 Welcome back! ${grown} plant${grown>1?'s':''} grew while you were away.` : '🌿 Welcome back! Your garden missed you.';
+  }
+}
+applyOffline();
+if(!state.orders.length) generateOrders();
+if(!state.tasks.length || state.tasks[0].day!==state.day) generateTasks();
+
+/* ---------------- Helpers ---------------- */
+const $ = id => document.getElementById(id);
+function charm(){
+  let c = 0;
+  for(const k of DECOR_KEYS) if(state.decor[k]) c += DECOR[k].charm;
+  c += Object.keys(state.album).length;
+  c += Math.floor(state.stats.harvested/10);
+  return c;
+}
+function coinMult(){ let m=1; if(state.decor.fence) m+=.05; if(state.decor.windchime) m+=.05; return m; }
+function speedMult(){ let m=1; if(state.decor.lantern) m+=.10; if(state.decor.windchime) m+=.05; return m; }
+function rareChance(){ let c=.08; if(state.decor.birdbath) c+=.10; if(state.decor.pond) c+=.08; c+=charm()*.004; return Math.min(c,.5); }
+function expansionCost(){ return 180 + (state.unlocked-9)*140; }
+function isNight(){ return state.dayT > .60; }
+function fmtTime(ms){
+  if(ms<60000) return Math.round(ms/1000)+'s';
+  return Math.round(ms/60000)+'m';
+}
+
+/* progression: levels, orders, daily tasks */
+function plantUnlock(k){ return UNLOCK_LEVEL[k]||1; }
+function unlockedKeys(){ return PLANT_KEYS.filter(k=>state.level>=plantUnlock(k)); }
+function xpNeeded(level){ return Math.round(60*Math.pow(level,1.35)); }
+function addXP(amount){
+  state.xp += amount;
+  let gained=0;
+  while(state.xp >= xpNeeded(state.level)){
+    state.xp -= xpNeeded(state.level); state.level++; gained++;
+  }
+  if(gained){
+    const reward=40*state.level;
+    state.coins+=reward; sfx('day');
+    pendingNotices.push(`🌟 Level ${state.level}! +${reward} coins${state.level===2?' · Lavender unlocked!':''}`);
+    spawnParticles(cssW/2,cssH*.3,34,'#ffe6a0','sparkle');
+  }
+}
+function makeOrder(){
+  const pool=unlockedKeys();
+  const plant=pool[Math.floor(Math.random()*pool.length)];
+  const d=PLANTS[plant], need=1+Math.floor(Math.random()*3);
+  const v=VILLAGERS[Math.floor(Math.random()*VILLAGERS.length)];
+  return {id:Date.now()+Math.random(), plant, need, done:0,
+    reward:Math.round(d.sell*need*1.8)+10, xp:need*8, name:v.name, emoji:v.emoji};
+}
+function generateOrders(){ state.orders=[makeOrder(),makeOrder(),makeOrder()]; }
+function generateTasks(){
+  const pool=TASK_POOL.slice(), picks=[];
+  for(let i=0;i<3&&pool.length;i++) picks.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
+  state.tasks=picks.map(p=>Object.assign({},p,{id:p.id+'_'+state.day,done:0,claimed:false,day:state.day}));
+}
+function progressTasks(track,amount,plant){
+  for(const t of state.tasks){
+    if(t.claimed || t.done>=t.target) continue;
+    if(t.track===track && (!t.plant || t.plant===plant)) t.done=Math.min(t.target,t.done+amount);
+  }
+}
+let toastTimer;
+let pendingNotices=[];
+function toast(msg){
+  const el = $('toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>el.classList.remove('show'), 2800);
+}
+
+/* ---------------- Audio ---------------- */
+let actx = null;
+function initAudio(){
+  if(!actx){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(AC) actx = new AC();
+  }
+  if(actx && actx.state === 'suspended') actx.resume();
+}
+function sfx(name){
+  if(state.muted) return;
+  initAudio(); if(!actx) return;
+  const t = actx.currentTime;
+  const beep = (f,d=.12,type='sine',v=.07,delay=0)=>{
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t+delay);
+    g.gain.setValueAtTime(.0001,t+delay);
+    g.gain.linearRampToValueAtTime(v,t+delay+.015);
+    g.gain.exponentialRampToValueAtTime(.0001,t+delay+d);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t+delay); o.stop(t+delay+d+.03);
+  };
+  switch(name){
+    case 'plant':   beep(330,.14,'triangle',.06); beep(440,.16,'sine',.05,.07); break;
+    case 'water':   beep(620,.10,'sine',.05); beep(780,.12,'sine',.04,.06); break;
+    case 'harvest': [523,659,784].forEach((f,i)=>beep(f,.18,'triangle',.06,i*.06)); break;
+    case 'coin':    beep(880,.08,'square',.03); beep(1174,.10,'square',.03,.06); break;
+    case 'error':   beep(180,.16,'sawtooth',.035); break;
+    case 'buy':     beep(494,.10,'triangle',.05); beep(740,.14,'triangle',.05,.08); break;
+    case 'day':     [392,523,659,784].forEach((f,i)=>beep(f,.30,'sine',.05,i*.10)); break;
+    case 'combo':   beep(660,.08,'square',.03); beep(880,.08,'square',.03,.06); beep(1100,.10,'square',.03,.12); break;
+  }
+}
+
+/* ---------------- UI ---------------- */
+function renderHeader(){
+  $('sCoins').textContent = Math.floor(state.coins);
+  $('sDay').textContent = state.day;
+  $('sCharm').textContent = charm();
+  $('sStreak').textContent = state.streak;
+  $('muteBtn').textContent = state.muted ? '🔇' : '🔊';
+  const need=xpNeeded(state.level);
+  $('xpLevel').textContent = state.level;
+  $('xpFill').style.width = Math.min(100,state.xp/need*100)+'%';
+  $('xpText').textContent = Math.floor(state.xp)+' / '+need+' XP';
+  const alerts=state.orders.filter(o=>o.done>=o.need).length + state.tasks.filter(t=>t.done>=t.target&&!t.claimed).length;
+  $('orderBadge').textContent = alerts ? ' • '+alerts : '';
+  const d = PLANTS[ui.selected];
+  $('seedBadge').textContent = d.emoji + ' ' + d.name + ' selected';
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===ui.tab));
+}
+function renderTab(){
+  const c = $('tabContent');
+  if(ui.tab==='seeds') c.innerHTML = viewSeeds();
+  else if(ui.tab==='orders') c.innerHTML = viewOrders();
+  else if(ui.tab==='shop') c.innerHTML = viewShop();
+  else if(ui.tab==='album') c.innerHTML = viewAlbum();
+  else c.innerHTML = viewHelp();
+}
+function viewSeeds(){
+  let h = '<div class="sectionTitle">Your seed pouch — pick one to plant</div>';
+  for(const k of PLANT_KEYS){
+    const d = PLANTS[k], count = state.seeds[k]||0;
+    const free = d.cost===0, locked=state.level<plantUnlock(k);
+    h += `<div class="card ${ui.selected===k?'sel':''}" ${locked?'style="opacity:.6"':''}>
+      <div class="cardIcon">${locked?'🔒':d.emoji}</div>
+      <div class="cardBody">
+        <div class="cardTitle">${locked?'???':d.name} <span class="pill g">×${free?'∞':count}</span></div>
+        <div class="cardSub">${locked?`Unlocks at garden level ${plantUnlock(k)} — keep harvesting!`:`${fmtTime(d.grow)} to grow · sells ⭐${d.sell}<br>${d.desc}`}</div>
+      </div>
+      <div class="cardActions">${locked
+        ? '<span class="pill">🔒 Lv '+plantUnlock(k)+'</span>'
+        : `<button class="act ${ui.selected===k?'':'primary'}" data-act="select" data-key="${k}">${ui.selected===k?'Selected':'Select'}</button>
+           <button class="act" data-act="buyseed" data-key="${k}" ${free?'disabled':''}>${free?'Free · ∞':`+1 · ⭐${d.cost}`}</button>`}
+      </div>
+    </div>`;
+  }
+  return h;
+}
+function viewOrders(){
+  let h = '<div class="sectionTitle">Villager requests — harvest flowers to fill them</div>';
+  for(const o of state.orders){
+    const d=PLANTS[o.plant], ready=o.done>=o.need;
+    h += `<div class="card ${ready?'sel':''}">
+      <div class="cardIcon">${o.emoji}</div>
+      <div class="cardBody">
+        <div class="cardTitle">${o.name} wants ${o.need}× ${d.name} ${ready?'✓':''}</div>
+        <div class="cardSub">${o.done}/${o.need} delivered · ⭐${o.reward} + ${o.xp} XP</div>
+        <div class="bar" style="margin:6px 2px 0"><i style="width:${Math.min(100,o.done/o.need*100)}%"></i></div>
+      </div>
+      <div class="cardActions"><span class="owned">${ready?'Ready!':d.emoji}</span></div>
+    </div>`;
+  }
+  h += '<div class="sectionTitle" style="margin-top:16px">Today’s tasks — claim when done</div>';
+  for(const t of state.tasks){
+    const ready=t.done>=t.target && !t.claimed;
+    h += `<div class="card ${ready?'sel':''}">
+      <div class="cardIcon">${t.claimed?'✅':ready?'🎁':'🎯'}</div>
+      <div class="cardBody">
+        <div class="cardTitle">${t.label}</div>
+        <div class="cardSub">${t.claimed?'Completed!':`${t.done}/${t.target} · ⭐${t.reward} + ${t.xp} XP`}</div>
+        <div class="bar" style="margin:6px 2px 0"><i style="width:${Math.min(100,t.done/t.target*100)}%"></i></div>
+      </div>
+      <div class="cardActions">${t.claimed?'<span class="owned">✓ Done</span>':ready
+        ? `<button class="act primary" data-act="claimtask" data-key="${t.id}">Claim</button>`
+        : '<span class="pill">'+t.done+'/'+t.target+'</span>'}</div>
+    </div>`;
+  }
+  return h;
+}
+function viewShop(){
+  let h = `<div class="sectionTitle">Decorations — passive garden perks</div>`;
+  for(const k of DECOR_KEYS){
+    const d = DECOR[k], owned = !!state.decor[k];
+    h += `<div class="card">
+      <div class="cardIcon">${d.emoji}</div>
+      <div class="cardBody">
+        <div class="cardTitle">${d.name} <span class="pill">💚 +${d.charm}</span></div>
+        <div class="cardSub">${d.desc}</div>
+      </div>
+      <div class="cardActions">${owned
+        ? '<span class="owned">✓ Owned</span>'
+        : `<button class="act primary" data-act="buydecor" data-key="${k}" ${state.coins<d.cost?'disabled':''}>Buy ⭐${d.cost}</button>`}
+      </div>
+    </div>`;
+  }
+  const cost = expansionCost(), maxed = state.unlocked>=MAX_PLOTS;
+  h += `<div class="sectionTitle" style="margin-top:16px">Garden space</div>
+    <div class="card">
+      <div class="cardIcon">🪴</div>
+      <div class="cardBody">
+        <div class="cardTitle">Expand garden <span class="pill g">${state.unlocked} plots</span></div>
+        <div class="cardSub">${maxed?'Your garden is as big as it gets!':'Add one more cozy plot to tend.'}</div>
+      </div>
+      <div class="cardActions">${maxed
+        ? '<span class="owned">✓ Max</span>'
+        : `<button class="act primary" data-act="expand" ${state.coins<cost?'disabled':''}>Expand ⭐${cost}</button>`}
+      </div>
+    </div>`;
+  return h;
+}
+function viewAlbum(){
+  const plantFound = PLANT_KEYS.filter(k=>state.album[k]).length;
+  const critterFound = CRITTER_KEYS.filter(k=>state.album[k]).length;
+  let h = `<div class="sectionTitle">Flowers · ${plantFound}/${PLANT_KEYS.length}</div>
+    <div class="bar"><i style="width:${plantFound/PLANT_KEYS.length*100}%"></i></div><div class="albumGrid">`;
+  for(const k of PLANT_KEYS){
+    const d=PLANTS[k], got=!!state.album[k];
+    h += `<div class="tile ${got?'':'locked'}"><div class="ic">${got?d.emoji:'❔'}</div><div class="nm">${got?d.name:'???'}</div></div>`;
+  }
+  h += `</div><div class="sectionTitle">Garden friends · ${critterFound}/${CRITTER_KEYS.length}</div>
+    <div class="bar"><i style="width:${critterFound/CRITTER_KEYS.length*100}%"></i></div><div class="albumGrid">`;
+  for(const k of CRITTER_KEYS){
+    const d=CRITTERS[k], got=!!state.album[k];
+    h += `<div class="tile ${got?'':'locked'}"><div class="ic">${got?d.emoji:'❔'}</div><div class="nm">${got?d.name:'???'}</div></div>`;
+  }
+  h += `</div>`;
+  if(plantFound===PLANT_KEYS.length) h += '<p class="owned" style="text-align:center">🌸 Flower collection complete! Your garden is in full bloom.</p>';
+  if(critterFound===CRITTER_KEYS.length) h += '<p class="owned" style="text-align:center">🦋 Every friend found! Your garden is legendary.</p>';
+  return h;
+}
+function viewHelp(){
+  return `<div class="help">
+    <div class="sectionTitle">How to play</div>
+    <div class="step"><div class="n">1</div><div><b>Plant:</b> Choose a seed in the Seeds tab, then tap an empty plot.</div></div>
+    <div class="step"><div class="n">2</div><div><b>Water:</b> Tap a growing plant to speed it up. You can water each plant twice.</div></div>
+    <div class="step"><div class="n">3</div><div><b>Harvest:</b> Tap a fully grown bloom for coins and a chance at rare visitors.</div></div>
+    <div class="step"><div class="n">4</div><div><b>Orders:</b> Villagers request specific flowers. Harvest what they ask for to earn big coins and XP — orders refill automatically.</div></div>
+    <div class="step"><div class="n">5</div><div><b>Tasks:</b> Three fresh daily goals in the Orders tab. Claim them for bonus coins and XP.</div></div>
+    <div class="step"><div class="n">6</div><div><b>Levels & combos:</b> Every harvest earns XP. Level up to unlock new flowers. Tap several ready blooms within 3 seconds for a rising coin multiplier!</div></div>
+    <div class="step"><div class="n">7</div><div><b>Rest:</b> Tap <b>Good Night</b> for a daily bonus, new tasks, and events like rain or a visiting cat.</div></div>
+    <p>💚 <b>Charm</b> comes from decorations, album finds, and harvests. More charm means better daily bonuses and rarer visitors.</p>
+    <p>🌙 Your garden keeps growing while you're away — come back whenever you like.</p>
+    <p style="color:var(--muted);font-size:11px">Progress saves automatically in this browser. No account needed.</p>
+    <button class="act danger" data-act="reset">Reset garden (start over)</button>
+  </div>`;
+}
+function refresh(){ renderHeader(); renderTab(); save(); }
+
+$('tabContent').addEventListener('click', e=>{
+  const b = e.target.closest('[data-act]'); if(!b) return;
+  initAudio();
+  const act=b.dataset.act, k=b.dataset.key;
+  if(act==='select'){ ui.selected=k; sfx('coin'); }
+  else if(act==='claimtask'){
+    const t=state.tasks.find(x=>x.id===k);
+    if(!t || t.claimed || t.done<t.target){ sfx('error'); return; }
+    t.claimed=true; state.coins+=t.reward; state.stats.coinsEarned+=t.reward; addXP(t.xp); sfx('buy');
+    const more=pendingNotices.length?' '+pendingNotices.join(' '):''; pendingNotices=[];
+    toast(`✅ ${t.label} complete! +${t.reward} coins${more}`);
+  }
+  else if(act==='buyseed'){
+    const d=PLANTS[k], cost=d.cost;
+    if(state.coins<cost){ toast('Not enough coins ⭐'); sfx('error'); return; }
+    state.coins-=cost; state.seeds[k]=(state.seeds[k]||0)+1; sfx('buy'); toast(`${d.emoji} +1 ${d.name} seed`);
+  }
+  else if(act==='buydecor'){
+    const d=DECOR[k];
+    if(state.decor[k] || state.coins<d.cost){ sfx('error'); return; }
+    state.coins-=d.cost; state.decor[k]=true; sfx('buy'); toast(`${d.emoji} ${d.name} added to your garden!`);
+  }
+  else if(act==='expand'){
+    const cost=expansionCost();
+    if(state.unlocked>=MAX_PLOTS || state.coins<cost){ sfx('error'); return; }
+    state.coins-=cost; state.unlocked++; state.plots.push({plant:null,progress:0,waters:0});
+    sfx('buy'); toast('🪴 A new plot appeared!'); layout();
+  }
+  else if(act==='reset'){
+    if(confirm('Reset your whole garden? This cannot be undone.')){
+      state=newGame(); generateOrders(); generateTasks(); combo.count=0; ui.selected='daisy'; toast('🌱 A fresh start!'); layout();
+    }
+  }
+  refresh();
+});
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{ ui.tab=b.dataset.tab; renderHeader(); renderTab(); }));
+$('muteBtn').addEventListener('click',()=>{ state.muted=!state.muted; if(!state.muted){initAudio();sfx('coin');} refresh(); });
+$('nightBtn').addEventListener('click',()=>{
+  initAudio(); state.day++; state.dayT=0; state.streak++; generateTasks();
+  const bonus=8+charm()*2+Math.min(state.streak,10)*2;
+  state.coins+=bonus; sfx('day');
+  let msg=`🌅 Day ${state.day}! +${bonus} coins for your streak.`;
+  const r=Math.random();
+  if(r<.30){
+    let n=0;
+    for(const p of state.plots) if(p.plant){ const g=PLANTS[p.plant].grow; if(p.progress<g){p.progress=Math.min(g,p.progress+g*.20);n++;} }
+    msg='🌧️ Gentle rain watered '+n+' plants! +'+bonus+' coins.';
+  } else if(r<.45){
+    state.coins+=12;
+    const pool=unlockedKeys().filter(k=>PLANTS[k].cost>0);
+    const gift=pool[Math.floor(Math.random()*pool.length)];
+    state.seeds[gift]=(state.seeds[gift]||0)+1;
+    msg=`🐈 A cat left you 12 coins and a ${PLANTS[gift].name} seed!`;
+  } else if(r<.62 && state.decor.birdbath){
+    const found=discoverCritter();
+    if(found) msg=`🦋 A visitor joined your album: ${CRITTERS[found].name}! +${bonus} coins.`;
+  }
+  msg += ' New tasks are ready.';
+  toast(msg); refresh();
+});
+function discoverCritter(){
+  const locked=CRITTER_KEYS.filter(k=>!state.album[k]);
+  if(!locked.length){ state.coins+=25; return null; }
+  const k=locked[Math.floor(Math.random()*locked.length)];
+  state.album[k]=true;
+  if(k==='butterfly') spawnAmbientButterfly();
+  return k;
+}
+
+/* ---------------- Garden actions ---------------- */
+let combo={count:0,until:0};
+function plantAt(i){
+  const k=ui.selected, d=PLANTS[k], p=state.plots[i];
+  if(state.level<plantUnlock(k)){ toast(`🔒 ${d.name} unlocks at level ${plantUnlock(k)}.`); sfx('error'); return; }
+  if(d.cost>0 && (state.seeds[k]||0)<=0){ toast(`No ${d.name} seeds! Buy some in the Seeds tab.`); sfx('error'); ui.tab='seeds'; renderHeader(); renderTab(); return; }
+  if(d.cost>0) state.seeds[k]--;
+  state.stats.planted++; progressTasks('plant',1,k);
+  p.plant=k; p.progress=0; p.waters=0;
+  if(!state.album[k]){ state.album[k]=true; toast(`📖 New album entry: ${d.name}!`); }
+  spawnParticles(plotRects[i].x+plotRects[i].w/2, plotRects[i].y+plotRects[i].h*.6, 8, '#b7d9a8', 'petal');
+  sfx('plant'); refresh();
+}
+function waterAt(i){
+  const p=state.plots[i], d=PLANTS[p.plant];
+  if(p.waters>=2){ toast('🌿 Already watered enough!'); sfx('error'); return; }
+  p.waters++; p.progress=Math.min(d.grow, p.progress + d.grow*.30);
+  state.stats.watered++; progressTasks('water',1);
+  const r=plotRects[i];
+  spawnParticles(r.x+r.w/2, r.y+r.h*.35, 12, '#8fc9e8', 'drop');
+  spawnText(r.x+r.w/2, r.y+r.h*.2, '+30%', '#5b9ec4');
+  sfx('water'); save();
+}
+function harvestAt(i){
+  const p=state.plots[i], d=PLANTS[p.plant], kind=p.plant;
+  const now=performance.now();
+  combo.count = now<combo.until ? combo.count+1 : 1;
+  combo.until = now+3000;
+  const mult=1+Math.min(combo.count-1,5)*.2;
+  const gain=Math.round(d.sell*coinMult()*mult);
+  state.coins+=gain; state.stats.harvested++; state.stats.coinsEarned+=gain;
+  progressTasks('harvest',1,kind); progressTasks('coins',gain);
+  addXP(d.sell);
+  if(!state.album[kind]) state.album[kind]=true;
+  const r=plotRects[i], cx=r.x+r.w/2, cy=r.y+r.h*.4;
+  spawnParticles(cx,cy,16+(combo.count>1?8:0),d.color,'petal');
+  spawnText(cx,cy,'+'+gain,'#c9972f');
+  if(combo.count>1){ spawnText(cx,cy-26,'⚡ x'+combo.count+' COMBO','#d16ba5'); sfx('combo'); }
+  sfx('harvest'); sfx('coin');
+  let extra='';
+  for(const o of state.orders) if(o.plant===kind) o.done++;
+  for(const o of state.orders.filter(x=>x.done>=x.need)){
+    state.coins+=o.reward; state.stats.ordersDone++;
+    progressTasks('order',1); addXP(o.xp);
+    state.orders[state.orders.indexOf(o)]=makeOrder();
+    extra += ` 📦 ${o.name}'s order complete! +${o.reward} coins`;
+    spawnParticles(cssW/2,cssH*.35,18,'#ffd98a','sparkle');
+  }
+  if(Math.random()<rareChance()){
+    const found=discoverCritter();
+    extra += found ? ` A ${CRITTERS[found].name} appeared!` : ' A rare 25 coin tip!';
+  } else if(Math.random()<.12){
+    const pool=unlockedKeys().filter(k=>PLANTS[k].cost>0);
+    const gift=pool[Math.floor(Math.random()*pool.length)];
+    state.seeds[gift]=(state.seeds[gift]||0)+1;
+    extra+=` Found a ${PLANTS[gift].name} seed!`;
+  }
+  if(pendingNotices.length){ extra += ' ' + pendingNotices.join(' '); pendingNotices=[]; }
+  toast(`🌸 Harvested ${d.name}! +${gain} coins.${extra}`);
+  state.plots[i]={plant:null,progress:0,waters:0};
+  refresh();
+}
+
+/* ---------------- Canvas ---------------- */
+const canvas=$('garden'), ctx=canvas.getContext('2d');
+let cssW=600,cssH=600,dpr=1,plotRects=[];
+function resize(){
+  const r=canvas.getBoundingClientRect();
+  cssW=Math.max(200,r.width); cssH=Math.max(200,r.height);
+  dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.round(cssW*dpr); canvas.height=Math.round(cssH*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  layout();
+}
+function layout(){
+  const n=state.unlocked, cols=Math.ceil(Math.sqrt(n)), rows=Math.ceil(n/cols);
+  const pad=Math.min(30,cssW*.06), gap=Math.max(6,cssW*.012);
+  const s=Math.min((cssW-pad*2-gap*(cols-1))/cols, (cssH-pad*2-gap*(rows-1)-18)/rows, 108);
+  const tw=s*cols+gap*(cols-1), th=s*rows+gap*(rows-1);
+  const ox=(cssW-tw)/2, oy=(cssH-th)/2+8;
+  plotRects=[];
+  for(let i=0;i<n;i++){
+    const c=i%cols, rRow=Math.floor(i/cols);
+    plotRects.push({x:ox+c*(s+gap),y:oy+rRow*(s+gap),w:s,h:s,s});
+  }
+}
+window.addEventListener('resize',resize);
+if(window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
+
+/* particles */
+let particles=[];
+function spawnParticles(x,y,n,color,type){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*TAU, sp=.3+Math.random()*1.2;
+    particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-.4,life:1,color,type,size:2+Math.random()*3,rot:Math.random()*TAU});
+  }
+}
+function spawnText(x,y,text,color){ particles.push({x,y,vx:0,vy:-.45,life:1,color,type:'text',text,size:14}); }
+function spawnAmbientButterfly(){ /* butterflies are drawn from album state */ }
+
+/* sky */
+const SKY=[
+  {t:0,   top:'#ffd9c9', bot:'#fff0dd'},
+  {t:.28, top:'#bfe3f2', bot:'#eaf8ff'},
+  {t:.55, top:'#ffc4a3', bot:'#ffe0c4'},
+  {t:.78, top:'#46456f', bot:'#7b7aa6'},
+  {t:1,   top:'#ffd9c9', bot:'#fff0dd'}
+];
+function hex2rgb(h){h=h.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function rgb2hex(a){return '#'+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');}
+function lerpC(a,b,t){const A=hex2rgb(a),B=hex2rgb(b);return rgb2hex(A.map((v,i)=>v+(B[i]-v)*t));}
+function skyColors(t){
+  let i=0; while(i<SKY.length-2 && t>SKY[i+1].t) i++;
+  const a=SKY[i],b=SKY[i+1], f=Math.max(0,Math.min(1,(t-a.t)/(b.t-a.t)));
+  return {top:lerpC(a.top,b.top,f),bot:lerpC(a.bot,b.bot,f)};
+}
+
+/* drawing helpers */
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+function leaf(dir,y,s){
+  ctx.fillStyle='#86bd8e';
+  ctx.beginPath(); ctx.ellipse(dir*s*.10,y,s*.13,s*.065,dir*.5,0,TAU); ctx.fill();
+  ctx.strokeStyle='#6fa871'; ctx.lineWidth=Math.max(1,s*.012);
+  ctx.beginPath(); ctx.moveTo(0,y+s*.03); ctx.lineTo(dir*s*.17,y-s*.02); ctx.stroke();
+}
+function drawFlower(def,x,y,s,t,idx,p,ready){
+  ctx.save(); ctx.translate(x,y);
+  if(ready){ ctx.shadowColor=def.color; ctx.shadowBlur=10+Math.sin(t*.006+idx)*6; }
+  if(def===PLANTS.starbloom){
+    ctx.fillStyle=def.color; ctx.beginPath();
+    for(let i=0;i<10;i++){
+      const a=-Math.PI/2+i*Math.PI/5, r=i%2===0?s:s*.42;
+      ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);
+    }
+    ctx.closePath(); ctx.fill();
+  } else if(def===PLANTS.tulip){
+    ctx.fillStyle=def.color;
+    ctx.beginPath(); ctx.ellipse(0,-s*.1,s*.34,s*.42,0,0,TAU); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-s*.20,-s*.02,s*.18,s*.34,-.25,0,TAU); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(s*.20,-s*.02,s*.18,s*.34,.25,0,TAU); ctx.fill();
+  } else if(def===PLANTS.lavender){
+    for(let i=0;i<6;i++){
+      const yy=-s*.45+i*s*.17, ww=s*.23*(i<5?1:.7);
+      ctx.fillStyle=i%2?def.color:'#c9b2ec';
+      ctx.beginPath(); ctx.ellipse(0,yy,ww,s*.14,0,0,TAU); ctx.fill();
+    }
+  } else {
+    for(let i=0;i<def.petals;i++){
+      const a=i/def.petals*TAU + t*.0002;
+      ctx.fillStyle=def.color;
+      ctx.beginPath(); ctx.ellipse(Math.cos(a)*s*.42,Math.sin(a)*s*.42,s*.30,s*.17,a,0,TAU); ctx.fill();
+    }
+    ctx.fillStyle=def.center; ctx.beginPath(); ctx.arc(0,0,s*.26,0,TAU); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(-s*.07,-s*.07,s*.08,0,TAU); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawPlant(p,idx,t,r){
+  const def=PLANTS[p.plant], g=Math.min(1,p.progress/def.grow);
+  const cx=r.x+r.w/2, cy=r.y+r.h*.80, s=r.s;
+  const sway=Math.sin(t*.0015+idx*.7)*.055*(.4+g);
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(sway);
+  ctx.fillStyle='rgba(80,60,50,.10)'; ctx.beginPath(); ctx.ellipse(0,s*.05,s*.25,s*.075,0,0,TAU); ctx.fill();
+  if(g<.12){
+    ctx.strokeStyle='#79b27f'; ctx.lineWidth=Math.max(2,s*.035); ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-s*.12); ctx.stroke();
+    leaf(-1,-s*.10,s*.8); leaf(1,-s*.06,s*.8);
+  } else {
+    const h=s*(.12+.42*Math.min(1,g/.75));
+    ctx.strokeStyle='#6fa871'; ctx.lineWidth=Math.max(2.5,s*.04); ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(s*.04,-h*.5,0,-h); ctx.stroke();
+    leaf(-1,-h*.38,s); leaf(1,-h*.18,s);
+    if(g>.42){
+      const bud=Math.min(1,(g-.42)/.32);
+      if(g<.78){
+        ctx.fillStyle=def.color; ctx.beginPath(); ctx.ellipse(0,-h,s*.13*bud,s*.18*bud,0,0,TAU); ctx.fill();
+        ctx.fillStyle='#8fbf9f'; ctx.beginPath(); ctx.ellipse(0,-h+s*.10,s*.10,s*.06,0,0,TAU); ctx.fill();
+      } else {
+        const fs=s*(.17+.07*(g-.78)/.22);
+        drawFlower(def,0,-h,fs,t,idx,p,g>=1);
+        if(g>=1){
+          ctx.fillStyle='rgba(255,255,255,.9)';
+          const sp=Math.sin(t*.004+idx)*s*.03;
+          ctx.beginPath(); ctx.arc(s*.28,-h-s*.25+sp,Math.max(1.4,s*.018),0,TAU); ctx.fill();
+        }
+      }
+    }
+  }
+  ctx.restore();
+  if(p.waters>0){
+    ctx.fillStyle='#8fc9e8';
+    ctx.beginPath(); ctx.ellipse(r.x+r.w*.80,r.y+r.h*.18,s*.045,s*.06,0,0,TAU); ctx.fill();
+  }
+}
+function drawButterflies(t){
+  if(!state.album.butterfly) return;
+  for(let i=0;i<2;i++){
+    const x=cssW*.2+((t*.02*(i?-.8:1)+i*cssW*.45)%(cssW*.8)+cssW*.8)%(cssW*.8)+cssW*.1;
+    const y=cssH*.22+Math.sin(t*.0012+i*2)*cssH*.12;
+    const flap=.25+Math.abs(Math.sin(t*.02+i))*.75;
+    ctx.save(); ctx.translate(x,y);
+    ctx.fillStyle=i?'#a9c9f2':'#f4b8d0'; ctx.globalAlpha=.85;
+    ctx.beginPath(); ctx.ellipse(-5,0,6*flap,4,-.3,0,TAU); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(5,0,6*flap,4,.3,0,TAU); ctx.fill();
+    ctx.fillStyle='#7a6a80'; ctx.beginPath(); ctx.ellipse(0,0,1.5,5,0,0,TAU); ctx.fill();
+    ctx.restore();
+  }
+}
+function drawScene(t){
+  const col=skyColors(state.dayT);
+  const g=ctx.createLinearGradient(0,0,0,cssH);
+  g.addColorStop(0,col.top); g.addColorStop(1,col.bot);
+  ctx.fillStyle=g; ctx.fillRect(0,0,cssW,cssH);
+  // sun / moon
+  const sx=cssW*.80, sy=cssH*.14;
+  ctx.fillStyle=isNight()?'rgba(245,245,220,.85)':'rgba(255,238,170,.9)';
+  ctx.beginPath(); ctx.arc(sx,sy,isNight()?16:22,0,TAU); ctx.fill();
+  ctx.fillStyle=col.top; ctx.beginPath(); ctx.arc(sx+7,sy-5,isNight()?14:18,0,TAU); ctx.fill();
+  // hills
+  ctx.fillStyle=isNight()?'#6f9b7a':'#a6d3a4';
+  ctx.beginPath(); ctx.moveTo(0,cssH*.42);
+  ctx.quadraticCurveTo(cssW*.25,cssH*.34,cssW*.5,cssH*.44);
+  ctx.quadraticCurveTo(cssW*.78,cssH*.32,cssW,cssH*.43);
+  ctx.lineTo(cssW,cssH); ctx.lineTo(0,cssH); ctx.fill();
+  ctx.fillStyle=isNight()?'#628d6e':'#93c593';
+  ctx.beginPath(); ctx.moveTo(0,cssH*.56);
+  ctx.quadraticCurveTo(cssW*.3,cssH*.48,cssW*.6,cssH*.58);
+  ctx.quadraticCurveTo(cssW*.85,cssH*.5,cssW,cssH*.55);
+  ctx.lineTo(cssW,cssH); ctx.lineTo(0,cssH); ctx.fill();
+  // plots
+  for(let i=0;i<plotRects.length;i++){
+    const r=plotRects[i];
+    ctx.fillStyle='rgba(70,50,45,.10)'; roundRect(r.x+2,r.y+4,r.w,r.h,r.s*.14); ctx.fill();
+    ctx.fillStyle='#b88968'; roundRect(r.x,r.y,r.w,r.h,r.s*.14); ctx.fill();
+    ctx.fillStyle='#caa07d'; roundRect(r.x+r.s*.06,r.y+r.s*.06,r.w-r.s*.12,r.h-r.s*.12,r.s*.10); ctx.fill();
+    ctx.fillStyle='rgba(120,80,60,.10)';
+    for(let k=0;k<4;k++){
+      const a=Math.sin(i*7+k*13)*.3+.5, b=Math.cos(i*11+k*5)*.3+.5;
+      ctx.beginPath(); ctx.arc(r.x+r.w*a,r.y+r.h*b,Math.max(1,r.s*.012),0,TAU); ctx.fill();
+    }
+  }
+  for(let i=0;i<plotRects.length;i++){
+    const p=state.plots[i]; if(p&&p.plant) drawPlant(p,i,t,plotRects[i]);
+  }
+  // decor shelf (top-left)
+  const owned=DECOR_KEYS.filter(k=>state.decor[k]);
+  ctx.font='20px serif'; ctx.textBaseline='middle';
+  owned.forEach((k,i)=>ctx.fillText(DECOR[k].emoji, 14+i*24, 54));
+  if(state.album.cat){ ctx.font='26px serif'; ctx.fillText('🐱', cssW-40, cssH-46); }
+  drawButterflies(t);
+  if(combo.count>1 && performance.now()<combo.until){
+    ctx.fillStyle='rgba(255,255,255,.92)'; roundRect(cssW-152,12,140,32,16); ctx.fill();
+    ctx.fillStyle='#b5649f'; ctx.font='900 14px Nunito, sans-serif'; ctx.textBaseline='middle';
+    ctx.fillText(`⚡ x${combo.count} COMBO`, cssW-141, 29);
+  }
+  // particles
+  for(const q of particles){
+    ctx.globalAlpha=Math.max(0,q.life);
+    if(q.type==='text'){
+      ctx.fillStyle=q.color; ctx.font=`900 ${q.size}px Nunito, sans-serif`; ctx.textAlign='center';
+      ctx.fillText(q.text,q.x,q.y); ctx.textAlign='left';
+    } else if(q.type==='drop'){
+      ctx.fillStyle=q.color; ctx.beginPath(); ctx.ellipse(q.x,q.y,q.size*.7,q.size,0,0,TAU); ctx.fill();
+    } else if(q.type==='petal'){
+      ctx.save(); ctx.translate(q.x,q.y); ctx.rotate(q.rot); ctx.fillStyle=q.color;
+      ctx.beginPath(); ctx.ellipse(0,0,q.size,q.size*.55,0,0,TAU); ctx.fill(); ctx.restore();
+    } else {
+      ctx.fillStyle=q.color; ctx.beginPath(); ctx.arc(q.x,q.y,q.size*.5,0,TAU); ctx.fill();
+    }
+  }
+  ctx.globalAlpha=1;
+}
+
+/* ---------------- Loop & input ---------------- */
+let last=performance.now();
+function frame(now){
+  let dt=Math.min(now-last,100); last=now;
+  state.dayT+=dt/DAY_MS;
+  while(state.dayT>=1){ state.dayT-=1; state.day++; generateTasks(); if(ui.tab==='orders') renderTab(); }
+  if(combo.count && now>combo.until) combo.count=0;
+  const sm=speedMult();
+  for(const p of state.plots){
+    if(p.plant && p.progress<PLANTS[p.plant].grow) p.progress=Math.min(PLANTS[p.plant].grow,p.progress+dt*sm);
+  }
+  particles=particles.filter(q=>{
+    q.x+=q.vx*dt*.06; q.y+=q.vy*dt*.06; q.vy+=dt*.0009; q.rot+=dt*.004; q.life-=dt*.0011;
+    return q.life>0;
+  });
+  try{ drawScene(now); }
+  catch(err){ if(!window.__renderWarned){ window.__renderWarned=true; console.warn('Render skipped:',err); } }
+  requestAnimationFrame(frame);
+}
+
+canvas.addEventListener('pointerdown',e=>{
+  initAudio();
+  const r=canvas.getBoundingClientRect();
+  const x=e.clientX-r.left, y=e.clientY-r.top;
+  for(let i=0;i<plotRects.length;i++){
+    const q=plotRects[i];
+    if(x>=q.x&&x<=q.x+q.w&&y>=q.y&&y<=q.y+q.h){
+      const p=state.plots[i];
+      if(!p.plant) plantAt(i);
+      else if(p.progress>=PLANTS[p.plant].grow) harvestAt(i);
+      else waterAt(i);
+      return;
+    }
+  }
+});
+setInterval(()=>{ renderHeader(); save(); },5000);
+window.addEventListener('beforeunload',save);
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) save(); });
+
+resize();
+renderHeader(); renderTab();
+requestAnimationFrame(frame);
+if(offlineMessage) setTimeout(()=>toast(offlineMessage),600);
+else setTimeout(()=>toast('🌱 Tap an empty plot to plant your first seed!'),800);
+</script>
+</body>
+</html>
